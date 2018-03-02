@@ -6,7 +6,7 @@ int contrast = PWMRANGE;
 
 int menuitem = 1;
 int page = 1;
-#define  BACKLIGHT  D0
+//#define  BACKLIGHT  D0
 volatile boolean up = false;
 volatile boolean down = false;
 volatile boolean middle = false;
@@ -57,6 +57,11 @@ void checkIfSelectButtonIsPressed()
   }
   lastSelectButtonState = selectButtonState;
 }
+void SetMenuColor(bool currentMenu)
+{
+  display.setTextColor(currentMenu ? WHITE : BLACK, currentMenu ? BLACK : WHITE);
+}
+
 
 void drawMenu()
 {
@@ -65,52 +70,27 @@ void drawMenu()
     display.setTextSize(1);
     display.clearDisplay();
     display.setTextColor(BLACK, WHITE);
-    display.setCursor(15, 0);
-    display.print("MAIN MENU");
+    display.setCursor(0, 0);
+    display.print("ESP8266 Timer");
     display.drawFastHLine(0, 10, 83, BLACK);
     display.setCursor(0, 15);
 
-    if (menuitem == 1)
-    {
-      display.setTextColor(WHITE, BLACK);
-    }
-    else
-    {
-      display.setTextColor(BLACK, WHITE);
-    }
-    display.print(">Contrast");
+
+    SetMenuColor(menuitem == 1);
+
+    display.print("Delay: ");
+    display.print(contrast);
     display.setCursor(0, 25);
 
-    if (menuitem == 2)
-    {
-      display.setTextColor(WHITE, BLACK);
-    }
-    else
-    {
-      display.setTextColor(BLACK, WHITE);
-    }
-    display.print(">Light: ");
+    SetMenuColor(menuitem == 2);
+    display.print("Light: ");
+    display.print(backlight ? "ON" : "OFF");
 
-    if (backlight)
-    {
-      display.print("ON");
-    }
-    else
-    {
-      display.print("OFF");
-    }
     display.display();
 
-    if (menuitem == 3)
-    {
-      display.setTextColor(WHITE, BLACK);
-    }
-    else
-    {
-      display.setTextColor(BLACK, WHITE);
-    }
+    SetMenuColor(menuitem == 3);
     display.setCursor(0, 35);
-    display.print(">Reset");
+    display.print("Start");
     display.display();
   }
   else if (page == 2)
@@ -119,7 +99,7 @@ void drawMenu()
     display.clearDisplay();
     display.setTextColor(BLACK, WHITE);
     display.setCursor(15, 0);
-    display.print("BACKLIGHT");
+    display.print("DELAY");
     display.drawFastHLine(0, 10, 83, BLACK);
     display.setCursor(5, 15);
     display.print("Value");
@@ -133,8 +113,7 @@ void drawMenu()
 }
 void setContrast()
 {
-  analogWrite(BACKLIGHT, contrast);
-  display.display();
+
 }
 void turnBacklightOn()
 {
@@ -153,7 +132,6 @@ void resetDefaults()
   contrast = PWMRANGE;
   setContrast();
   backlight = false;
-  //  turnBacklightOn();
 }
 
 void setup() {
@@ -162,7 +140,6 @@ void setup() {
   pinMode(D2, INPUT_PULLUP);
   pinMode(D3, INPUT_PULLUP);
   pinMode(D4, INPUT_PULLUP);
-  pinMode(BACKLIGHT, OUTPUT);
 
   setContrast();
   Serial.begin(9600);
@@ -171,11 +148,12 @@ void setup() {
   display.setRotation(2);
   display.clearDisplay();
   display.display();
+  drawMenu();
 }
 
 void loop() {
 
-  drawMenu();
+
 
   downButtonState = digitalRead(D3);
   selectButtonState = digitalRead(D2);
@@ -193,11 +171,13 @@ void loop() {
     {
       menuitem = 3;
     }
+    drawMenu();
   } else if (up && page == 2 ) {
     up = false;
     contrast--;
     if (contrast < 0) contrast = 0;
     setContrast();
+    drawMenu();
   }
 
   if (down && page == 1) {
@@ -207,15 +187,18 @@ void loop() {
     {
       menuitem = 1;
     }
+    drawMenu();
   } else if (down && page == 2 ) {
     down = false;
     contrast++;
     if (contrast > PWMRANGE) contrast = PWMRANGE;
     setContrast();
+    drawMenu();
   }
-  if (!resetButtonState) {
-    resetDefaults();
-  }
+    if (!resetButtonState) {
+  //    resetDefaults();
+  //     drawMenu();
+    }
 
   if (middle) {
     middle = false;
@@ -245,6 +228,7 @@ void loop() {
     else if (page == 2) {
       page = 1;
     }
+    drawMenu();
   }
 }
 
