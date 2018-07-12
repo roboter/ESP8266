@@ -1,235 +1,100 @@
-#include <Adafruit_GFX.h>
-#include <Adafruit_PCD8544.h>
 
-boolean backlight = false;
-int contrast = PWMRANGE;
-
-int menuitem = 1;
-int page = 1;
-//#define  BACKLIGHT  D0
-volatile boolean up = false;
-volatile boolean down = false;
-volatile boolean middle = false;
-
-int downButtonState = 0;
-int upButtonState = 0;
-int resetButtonState = 0;
-int selectButtonState = 0;
-int lastDownButtonState = 0;
-int lastSelectButtonState = 0;
-int lastUpButtonState = 0;
-
-Adafruit_PCD8544 display = Adafruit_PCD8544(D6, -1, -1); //48×84
-
-void checkIfDownButtonIsPressed()
-{
-	if (downButtonState != lastDownButtonState)
-	{
-		if (downButtonState == 0)
-		{
-			down = true;
-		}
-		delay(50);
-	}
-	lastDownButtonState = downButtonState;
-}
-
-void checkIfUpButtonIsPressed()
-{
-	if (upButtonState != lastUpButtonState)
-	{
-		if (upButtonState == 0) {
-			up = true;
-		}
-		delay(50);
-	}
-	lastUpButtonState = upButtonState;
-}
-
-void checkIfSelectButtonIsPressed()
-{
-	if (selectButtonState != lastSelectButtonState)
-	{
-		if (selectButtonState == 0) {
-			middle = true;
-		}
-		delay(50);
-	}
-	lastSelectButtonState = selectButtonState;
-}
-void SetMenuColor(bool currentMenu)
-{
-	display.setTextColor(currentMenu ? WHITE : BLACK, currentMenu ? BLACK : WHITE);
-}
-
-
-void drawMenu()
-{
-	if (page == 1)
-	{
-		display.setTextSize(1);
-		display.clearDisplay();
-		display.setTextColor(BLACK, WHITE);
-		display.setCursor(0, 0);
-		display.print("ESP8266 Timer");
-		display.drawFastHLine(0, 10, 83, BLACK);
-		display.setCursor(0, 15);
-
-
-		SetMenuColor(menuitem == 1);
-
-		display.print("Delay: ");
-		display.print(contrast);
-		display.setCursor(0, 25);
-
-		SetMenuColor(menuitem == 2);
-		display.print("Light: ");
-		display.print(backlight ? "ON" : "OFF");
-
-		display.display();
-
-		SetMenuColor(menuitem == 3);
-		display.setCursor(0, 35);
-		display.print("Start");
-		display.display();
-	}
-	else if (page == 2)
-	{
-		display.setTextSize(1);
-		display.clearDisplay();
-		display.setTextColor(BLACK, WHITE);
-		display.setCursor(15, 0);
-		display.print("DELAY");
-		display.drawFastHLine(0, 10, 83, BLACK);
-		display.setCursor(5, 15);
-		display.print("Value");
-		display.setTextSize(2);
-		display.setCursor(5, 25);
-		display.print(contrast);
-
-		display.setTextSize(2);
-		display.display();
-	}
-}
-void setContrast()
-{
-
-}
-void turnBacklightOn()
-{
-	contrast = 0;
-	setContrast();
-}
-
-void turnBacklightOff()
-{
-	contrast = PWMRANGE;
-	setContrast();
-}
-
-void resetDefaults()
-{
-	contrast = PWMRANGE;
-	setContrast();
-	backlight = false;
-}
+#include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
+#include "SSD1306.h" // legacy include: `#include "SSD1306.h"`
+#include <A4988.h>
+// using a 200-step motor (most common)
+#define MOTOR_STEPS 200
+#define MICROSTEPS 1
+// configure the pins connected
+#define DIR D4
+#define STEP D0
+A4988 stepper(MOTOR_STEPS, DIR, STEP);
+SSD1306Wire  display(0x3c, D6, D5, GEOMETRY_128_32);
 
 void setup() {
+  stepper.begin(200, MICROSTEPS);
+  ///pinMode(D0, OUTPUT); // ON ESP
+  pinMode(D1, INPUT_PULLUP);
+  pinMode(D2, INPUT_PULLUP);
+  pinMode(D3, INPUT_PULLUP);
+  //pinMode(D4, OUTPUT);// ON NODEMCU Board
+  display.init();
 
-	pinMode(D1, INPUT_PULLUP);
-	pinMode(D2, INPUT_PULLUP);
-	pinMode(D3, INPUT_PULLUP);
-	pinMode(D4, INPUT_PULLUP);
+  display.flipScreenVertically();
+  display.setFont(ArialMT_Plain_10);
+  display.setContrast(255);
+}
+float del = 1;
+float i = 1;
+int button1 = HIGH;
+int button2 = HIGH;
+int button3 = HIGH;
+bool running = false;
 
-	setContrast();
-	Serial.begin(9600);
+void drawDisplay(int pos) {
+  // put your main code here, to run repeatedly:
 
-	display.begin();
-	display.setRotation(2);
-	display.clearDisplay();
-	display.display();
-	drawMenu();
+  display.clear();
+  // Print to the screen
+  // digitalWrite(D0,HIGH);
+  // digitalWrite(D4,HIGH);
+
+  display.drawRect(0, 12, 128, 10);
+  display.fillRect(0, 12, pos, 10);
+
+  if (running) {
+    display.drawString(0, 20, "stop ");
+    display.drawString(0, 0, "Delay: " + String((int)i));
+  } else {
+    display.drawString(0, 0, "Delay: " + String((int)pos));
+  }
+  display.display();
 }
 
 void loop() {
+  button1 = digitalRead(D1);
+  button2 = digitalRead(D2);
+  button3 = digitalRead(D3);
+  float one = 128 / (del + 1);
+  int pos =  one * i;
+  drawDisplay(running ? pos : (int)del % 128);
 
+  digitalWrite(D0, LOW);
+  digitalWrite(D4, LOW);
+  if (button1 == LOW)
+  {
+    del--;
+    i--;
+    if (del < 1)del = 1;
+    delay(10);
+  }
+  if (button2 == LOW)
+  {
+    del++;
+    i++;
+    delay(10);
+  }
 
+  if (button3 == LOW)
+  {
+    i = 0;
+    running = !running;
+    delay(1000);
+    //stepper.dir_pin = HIGH;
+    //stepper.rotate(360);
+    //stepper.dir_pin = LOW;
+    //stepper.rotate(-360);
 
-	downButtonState = digitalRead(D3);
-	selectButtonState = digitalRead(D2);
-	upButtonState = digitalRead(D1);
-	resetButtonState = digitalRead(D4);
+  }
+  if (i <= 0 && running)
+  {
+    i = del;
+    stepper.move(1);
+    stepper.disable();
+  }
+  if (running)
+  {
+    i = i - 0.1;
+  }
 
-	checkIfDownButtonIsPressed();
-	checkIfUpButtonIsPressed();
-	checkIfSelectButtonIsPressed();
-
-	if (up && page == 1) {
-		up = false;
-		menuitem--;
-		if (menuitem == 0)
-		{
-			menuitem = 3;
-		}
-		drawMenu();
-	}
-	else if (up && page == 2) {
-		up = false;
-		contrast--;
-		if (contrast < 0) contrast = 0;
-		setContrast();
-		drawMenu();
-	}
-
-	if (down && page == 1) {
-		down = false;
-		menuitem++;
-		if (menuitem == 4)
-		{
-			menuitem = 1;
-		}
-		drawMenu();
-	}
-	else if (down && page == 2) {
-		down = false;
-		contrast++;
-		if (contrast > PWMRANGE) contrast = PWMRANGE;
-		setContrast();
-		drawMenu();
-	}
-	if (!resetButtonState) {
-		//    resetDefaults();
-		//     drawMenu();
-	}
-
-	if (middle) {
-		middle = false;
-
-		if (page == 1 && menuitem == 2)
-		{
-			if (backlight)
-			{
-				backlight = false;
-				turnBacklightOff();
-			}
-			else
-			{
-				backlight = true;
-				turnBacklightOn();
-			}
-		}
-
-		if (page == 1 && menuitem == 3)
-		{
-			resetDefaults();
-		}
-		else if (page == 1 && menuitem == 1) {
-			page = 2;
-		}
-		else if (page == 2) {
-			page = 1;
-		}
-		drawMenu();
-	}
 }
-
