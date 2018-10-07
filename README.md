@@ -1,11 +1,35 @@
 #Slider for timelpase
+Can be controlled/configured via remote web interface,
+for controlling DSLR camera like Canon 1000D, that use standard audio jack for controlling shutter and focus
 
 #Hardware
-Processor:ESP8266 Nodemcu module
-Display: PCD8544
-Stepper-driver: A4988
+Processor: ESP8266 Nodemcu module
+Display: PCD8544 (Nokia)
+
+#Arduino setup
+Board: Nodemcu 1.0
+
+#Pinout
+D1 Up Button
+D2 Enter Button
+D3 Down Button
+D4 Reset Button
+
+Display
+D5
+D6 - Display ...
+D7
+
+D0 - to Canon
+D8 - to Canon
+
+
+#Display resolution
+48x48
+
 
 #Branches
+Main => with PCD8544 (Nokia)
 SSD1306 => with SSD1306 Display
 
 
