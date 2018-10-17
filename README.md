@@ -27,6 +27,7 @@ D8 - to Canon
 #Display resolution
 48x48
 
+#
 
 #Branches
 Main => with PCD8544 (Nokia)
