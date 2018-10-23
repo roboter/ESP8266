@@ -1,9 +1,9 @@
-#Slider for timelpase
+# Slider for timelpase
 
-#Hardware
-Processor: ESP8266 Nodemcu module
-Display: SSD1306
-Stepper-driver: A4988
+# Hardware
+- Processor: ESP8266 Nodemcu module
+- Display: SSD1306
+- Stepper-driver: A4988
 
 
 
