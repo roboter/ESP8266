@@ -1,3 +1,4 @@
+#include <spi.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 
@@ -19,7 +20,7 @@ int lastDownButtonState = 0;
 int lastSelectButtonState = 0;
 int lastUpButtonState = 0;
 
-Adafruit_PCD8544 display = Adafruit_PCD8544(D6, -1, -1); //48×84
+Adafruit_PCD8544 display = Adafruit_PCD8544(D6, -1, -1); //48ï¿½84
 
 void checkIfDownButtonIsPressed()
 {
@@ -74,7 +75,6 @@ void drawMenu()
 		display.print("ESP8266 Timer");
 		display.drawFastHLine(0, 10, 83, BLACK);
 		display.setCursor(0, 15);
-
 
 		SetMenuColor(menuitem == 1);
 
@@ -232,4 +232,3 @@ void loop() {
 		drawMenu();
 	}
 }
-
