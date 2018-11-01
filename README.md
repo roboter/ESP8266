@@ -7,7 +7,7 @@ Processor:
 - Nodemcu 1.0 (ESP8266)
 
 Display:
-- PCD8544 (Nokia) 48x48 pixels
+- [PCD8544 (Nokia) 48x48 pixels]( https://www.sparkfun.com/datasheets/LCD/Monochrome/Nokia5110.pdf)
 
 ### Pinout
 * D1 Up Button

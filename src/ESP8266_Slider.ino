@@ -2,8 +2,17 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 
+#define UP_BUTTON D1
+#define SELECT_BUTTON D2
+#define DOWN_BUTTON D3
+//#define RESET_BUTTON D4 //BUILDINLED ON ESPMODULE is in same PIN
+#define LED D4 // LED On ESP8266 module
+
+#define SHUTTER D8
+#define FOCUS D0
+
 boolean backlight = false;
-int contrast = PWMRANGE;
+int timer_delay = PWMRANGE;
 
 int menuitem = 1;
 int page = 1;
@@ -20,7 +29,7 @@ int lastDownButtonState = 0;
 int lastSelectButtonState = 0;
 int lastUpButtonState = 0;
 
-Adafruit_PCD8544 display = Adafruit_PCD8544(D6, -1, -1); //48�84
+Adafruit_PCD8544 display = Adafruit_PCD8544(D6, -1, -1); //48x84
 
 void checkIfDownButtonIsPressed()
 {
@@ -79,7 +88,7 @@ void drawMenu()
 		SetMenuColor(menuitem == 1);
 
 		display.print("Delay: ");
-		display.print(contrast);
+		display.print(timer_delay);
 		display.setCursor(0, 25);
 
 		SetMenuColor(menuitem == 2);
@@ -105,44 +114,28 @@ void drawMenu()
 		display.print("Value");
 		display.setTextSize(2);
 		display.setCursor(5, 25);
-		display.print(contrast);
+		display.print(timer_delay);
 
 		display.setTextSize(2);
 		display.display();
 	}
 }
-void setContrast()
-{
-
-}
-void turnBacklightOn()
-{
-	contrast = 0;
-	setContrast();
-}
-
-void turnBacklightOff()
-{
-	contrast = PWMRANGE;
-	setContrast();
-}
 
 void resetDefaults()
 {
-	contrast = PWMRANGE;
-	setContrast();
+	timer_delay = PWMRANGE;
 	backlight = false;
 }
 
 void setup() {
 
-	pinMode(D1, INPUT_PULLUP);
-	pinMode(D2, INPUT_PULLUP);
-	pinMode(D3, INPUT_PULLUP);
-	pinMode(D4, INPUT_PULLUP);
+	pinMode(UP_BUTTON, INPUT_PULLUP);
+	pinMode(SELECT_BUTTON, INPUT_PULLUP);
+	pinMode(DOWN_BUTTON, INPUT_PULLUP);
+//	pinMode(RESET_BUTTON, INPUT_PULLUP);
+	pinMode(LED, OUTPUT);
 
-	setContrast();
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 	display.begin();
 	display.setRotation(2);
@@ -152,13 +145,10 @@ void setup() {
 }
 
 void loop() {
-
-
-
-	downButtonState = digitalRead(D3);
-	selectButtonState = digitalRead(D2);
-	upButtonState = digitalRead(D1);
-	resetButtonState = digitalRead(D4);
+	downButtonState = digitalRead(DOWN_BUTTON);
+	selectButtonState = digitalRead(SELECT_BUTTON);
+	upButtonState = digitalRead(UP_BUTTON);
+//	resetButtonState = digitalRead(RESET_BUTTON);
 
 	checkIfDownButtonIsPressed();
 	checkIfUpButtonIsPressed();
@@ -175,9 +165,8 @@ void loop() {
 	}
 	else if (up && page == 2) {
 		up = false;
-		contrast--;
-		if (contrast < 0) contrast = 0;
-		setContrast();
+		timer_delay--;
+		if (timer_delay < 0) timer_delay = 0;
 		drawMenu();
 	}
 
@@ -192,15 +181,15 @@ void loop() {
 	}
 	else if (down && page == 2) {
 		down = false;
-		contrast++;
-		if (contrast > PWMRANGE) contrast = PWMRANGE;
-		setContrast();
+		timer_delay++;
+		if (timer_delay > PWMRANGE) timer_delay = PWMRANGE;
+
 		drawMenu();
 	}
-	if (!resetButtonState) {
-		//    resetDefaults();
-		//     drawMenu();
-	}
+	// if (!resetButtonState) {
+	// 	    resetDefaults();
+	// 	    drawMenu();
+	// }
 
 	if (middle) {
 		middle = false;
@@ -210,12 +199,10 @@ void loop() {
 			if (backlight)
 			{
 				backlight = false;
-				turnBacklightOff();
 			}
 			else
 			{
 				backlight = true;
-				turnBacklightOn();
 			}
 		}
 
@@ -231,4 +218,5 @@ void loop() {
 		}
 		drawMenu();
 	}
+	digitalWrite(LED, backlight?HIGH:LOW);
 }
