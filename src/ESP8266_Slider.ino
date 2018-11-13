@@ -10,11 +10,11 @@
 using namespace Menu;
 
 #define BTN_SEL D2  // Select button
-#define BTN_UP D1   // Up
-#define BTN_DOWN D3 // Down
+#define BTN_UP D3   // Up
+#define BTN_DOWN D1 // Down
 
 Adafruit_PCD8544 gfx(D6, -1, -1); // 48x84
-//#define LEDPIN D4
+#define LEDPIN D4
 
 result showEvent(eventMask e, navNode &nav, prompt &item) { return proceed; }
 
@@ -81,9 +81,9 @@ const colorDef<uint16_t> colors[] MEMMODE = {
 // keyIn<1> encButton(encBtn_map);      // 1 is the number of keys
 
 keyMap joystickBtn_map[] = {
-    {-BTN_SEL, defaultNavCodes[enterCmd].ch},
-    {-BTN_UP, defaultNavCodes[upCmd].ch},
-    {-BTN_DOWN, defaultNavCodes[downCmd].ch},
+    (keyMap){BTN_SEL, defaultNavCodes[enterCmd].ch, INPUT_PULLUP},
+    (keyMap){BTN_UP, defaultNavCodes[upCmd].ch, INPUT_PULLUP},
+    (keyMap){BTN_DOWN, defaultNavCodes[downCmd].ch, INPUT_PULLUP},
 };
 keyIn<3> joystickBtns(joystickBtn_map);
 
@@ -127,6 +127,7 @@ result idle(menuOut &o, idleEvent e) {
 }
 
 void setup() {
+  pinMode(LEDPIN, OUTPUT);
   joystickBtns.begin();
   nav.idleTask = idle; // point a function to be used when menu is suspended
   SPI.begin();
@@ -142,4 +143,6 @@ void loop() {
     nav.doOutput();
     gfx.display();
   }
+  digitalWrite(LEDPIN, ledCtrl);
+  delay(100); // simulate a delay when other tasks are done
 }
